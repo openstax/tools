@@ -122,5 +122,9 @@ Axlsx::Package.new do |package|
     end
   end
 
-  puts 'Failed to write output file' unless package.serialize(ARGV[1])
+  if package.serialize(ARGV[1])
+    puts 'Conversion done'
+  else
+    puts 'ERROR: Failed to write output file'
+  end
 end
