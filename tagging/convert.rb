@@ -18,7 +18,25 @@ class Array
   alias_method :blank?, :empty?
 end
 
-def convert_row(row, uuid_map)
+def map_collection(hash, cnx_id_map, chapter_number = 0)
+  contents = hash['contents']
+  chapter_number += 1 if contents.none?{ |hash| hash['id'] == 'subcol' }
+
+  page_number = nil
+  contents.each do |entry|
+    if entry['id'] == 'subcol'
+      chapter_number = map_collection(entry, cnx_id_map, chapter_number)
+    else
+      page_number ||= entry['title'].start_with?('Introduction') ? 0 : 1
+      cnx_id_map[chapter_number][page_number] = entry['id'].split('@').first
+      page_number += 1
+    end
+  end
+
+  return chapter_number
+end
+
+def convert_row(row, cnx_id_map)
   full_los = row[1].split(/,|\r?\n/).map(&:strip)
   full_lo_matches = full_los.map{ |fl| /\A(\w+)ch(\d+)-?s(\d+)-lo(\d+)\z/.match fl }
   book = full_lo_matches.map{ |flm| "stax-#{flm[1].downcase}" }.join(',')
@@ -29,7 +47,7 @@ def convert_row(row, uuid_map)
   full_id = row[0]
   id = /\ACNX_CC_[\w]+_(\d+)\z/.match(full_id)[1]
 
-  cnxmod = uuid_map[full_lo_matches.first[2]][full_lo_matches.first[3]] || ''
+  cnxmod = cnx_id_map[full_lo_matches.first[2].to_i][full_lo_matches.first[3].to_i] || ''
 
   type = 'concept-coach'
 
@@ -77,9 +95,10 @@ end
 input_sheet = RubyXL::Parser.parse(ARGV[0]).worksheets[0]
 
 book_cnx_url = ARGV[2]
-uuid_map = Hash.new{ |hash, key| hash[key] = {} }
+cnx_id_map = Hash.new{ |hash, key| hash[key] = {} }
 unless book_cnx_url.nil?
   response = HTTParty.get("#{book_cnx_url}.json").to_hash
+  map_collection(response['tree'], cnx_id_map)
 end
 
 Axlsx::Package.new do |package|
@@ -95,7 +114,7 @@ Axlsx::Package.new do |package|
       end
       next if values.compact.blank?
 
-      output_sheet.add_row convert_row(values, uuid_map)
+      output_sheet.add_row convert_row(values, cnx_id_map)
     end
   end
 
