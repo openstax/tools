@@ -114,7 +114,11 @@ Axlsx::Package.new do |package|
       end
       next if values.compact.blank?
 
-      output_sheet.add_row convert_row(values, cnx_id_map)
+      begin
+        output_sheet.add_row convert_row(values, cnx_id_map)
+      rescue
+        puts "WARNING: Due to an error, skipped row ##{index + 1} containing #{values.inspect}"
+      end
     end
   end
 
