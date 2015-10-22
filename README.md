@@ -7,6 +7,7 @@ Generic tools and scripts for OpenStax-related tasks
 ### convert.rb
 
 This executable ruby script can convert one of our spreadsheets to the "ideal" format.
+Only the first worksheet in the input excel file is converted.
 
 First download it to your computer run these commands to set it up
 (assumes you have ruby and rubygems already installed):
