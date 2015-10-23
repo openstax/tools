@@ -92,14 +92,15 @@ if ARGV.length < 2 || ARGV.length > 3
   abort
 end
 
-input_sheet = RubyXL::Parser.parse(ARGV[0]).worksheets[0]
-
 book_cnx_url = ARGV[2]
 cnx_id_map = Hash.new{ |hash, key| hash[key] = {} }
 unless book_cnx_url.nil?
   response = HTTParty.get("#{book_cnx_url}.json").to_hash
+  puts "Using module UUIDs for #{response['title']}"
   map_collection(response['tree'], cnx_id_map)
 end
+
+input_sheet = RubyXL::Parser.parse(ARGV[0]).worksheets[0]
 
 Axlsx::Package.new do |package|
   package.workbook.add_worksheet(name: input_sheet.sheet_name || 'Assessments') do |output_sheet|
