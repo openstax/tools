@@ -11,6 +11,24 @@ OUTPUT_HEADERS = [
   'feedback-a', 'b', 'feedback-b', 'c', 'feedback-c', 'd', 'feedback-d'
 ]
 
+BOOK_TAG_MAP = lambda do |book, chapter|
+  book = book.downcase
+
+  case book
+  when 'econ'
+    case chapter.to_i
+    when 1, 2, 3, 4, 5, 33, 34
+      'stax-econ,stax-micro,stax-macro'
+    when 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18
+      'stax-econ,stax-micro'
+    when 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32
+      'stax-econ,stax-macro'
+    end
+  else
+    "stax-#{book}"
+  end
+end
+
 TRUE_VALUES = ['true', 't', 'yes', 'y', '1']
 FALSE_VALUES = ['false', 'f', 'no', 'n', '0']
 
@@ -37,17 +55,18 @@ def map_collection(hash, cnx_id_map, chapter_number = 0)
 end
 
 def convert_row(row, cnx_id_map)
-  full_los = row[1].split(/,|\r?\n/).map(&:strip)
-  full_lo_matches = full_los.map{ |fl| /\A(\w+)ch(\d+)-?s(\d+)-lo(\d+)\z/.match fl }
-  book = full_lo_matches.map{ |flm| "stax-#{flm[1].downcase}" }.join(',')
-  chapter = full_lo_matches.map{ |flm| flm[2] }.join(',')
-  section = full_lo_matches.map{ |flm| flm[3] }.join(',')
-  lo = full_lo_matches.map{ |flm| flm[4] }.join(',')
+  full_lo = row[1]
+  full_lo_matches = /\A(\w+)ch(\d+)-?s(\d+)-lo(\d+)\z/.match full_lo
+  book_original = full_lo_matches[1]
+  chapter = full_lo_matches[2]
+  book = BOOK_TAG_MAP.call(book_original, chapter)
+  section = full_lo_matches[3]
+  lo = full_lo_matches[4]
 
   full_id = row[0]
   id = /\ACNX_CC_[\w]+_(\d+)\z/.match(full_id)[1]
 
-  cnxmod = cnx_id_map[full_lo_matches.first[2].to_i][full_lo_matches.first[3].to_i] || ''
+  cnxmod = cnx_id_map[full_lo_matches[2].to_i][full_lo_matches[3].to_i] || ''
 
   type = 'concept-coach'
 
@@ -88,14 +107,15 @@ end
 if ARGV.length < 2 || ARGV.length > 3
   puts 'Usage: convert.rb input_filename output_filename [book_cnx_url]'
   puts 'Only the first sheet of the input spreadsheet will be used'
-  puts 'If a book is specified, the first chapter/section in each exercise will be used to pull the UUID according to the collection structure'
+  puts 'If a book URL is specified, the chapter/section for each exercise'
+  puts 'will be used to pull the page UUID according to the book structure'
   abort
 end
 
 book_cnx_url = ARGV[2]
 cnx_id_map = Hash.new{ |hash, key| hash[key] = {} }
 unless book_cnx_url.nil?
-  response = HTTParty.get("#{book_cnx_url}.json").to_hash
+  response = HTTParty.get("#{book_cnx_url.chomp('.json')}.json").to_hash
   puts "Using module UUIDs for #{response['title']}"
   map_collection(response['tree'], cnx_id_map)
 end
