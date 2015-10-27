@@ -37,7 +37,7 @@ def map_collection(hash, cnx_id_map, chapter_number = 0)
 end
 
 def convert_row(row, cnx_id_map)
-  book = "stax-#{row[0]}"
+  book = row[0]
 
   chapter_matches = /\Ach(\d+)\z/.match row[1]
   chapter = chapter_matches[1]
