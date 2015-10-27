@@ -7,7 +7,7 @@ require 'json'
 
 OUTPUT_HEADERS = [
   'book', 'chapter', 'section', 'lo', 'id', 'cnxmod', 'ost-type', 'dok', 'blooms', 'art', 'time',
-  'display', 'requires-choices?', 'question', 'detailed-solution', 'correct-answer', 'a',
+  'display', 'requires-choices?', 'list', 'question', 'detailed-solution', 'correct-answer', 'a',
   'feedback-a', 'b', 'feedback-b', 'c', 'feedback-c', 'd', 'feedback-d'
 ]
 
@@ -98,9 +98,12 @@ def convert_row(row, cnx_id_map)
     req_choices = ''
   end
 
+  list = "#{book_original.capitalize} Chapter #{"%02d" % chapter}"
+
   text_columns = row.slice(11..-1)
 
-  [book, chapter, section, lo, id, cnxmod, type, dok, blooms, art, time, display, req_choices] + \
+  [book, chapter, section, lo, id, cnxmod, type,
+   dok, blooms, art, time, display, req_choices, list] + \
   text_columns.map{ |text| text.to_s.gsub(/\\?_/, '\_') }
 end
 
