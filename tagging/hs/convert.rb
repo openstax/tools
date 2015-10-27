@@ -45,7 +45,7 @@ def convert_row(row, cnx_id_map)
   section_matches = /\As(\d+)\z/.match row[2]
   section = section_matches[1]
 
-  lo_matches = /\Alo(\d+)\z/.match row[3]
+  lo_matches = /lo(\d+)\z/.match row[3]
   lo = lo_matches[1]
 
   id = row[4]
