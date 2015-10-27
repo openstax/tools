@@ -11,24 +11,6 @@ OUTPUT_HEADERS = [
   'feedback-a', 'b', 'feedback-b', 'c', 'feedback-c', 'd', 'feedback-d'
 ]
 
-BOOK_TAG_MAP = lambda do |book, chapter|
-  book = book.downcase
-
-  case book
-  when 'econ'
-    case chapter.to_i
-    when 1, 2, 3, 4, 5, 33, 34
-      'stax-econ,stax-micro,stax-macro'
-    when 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18
-      'stax-econ,stax-micro'
-    when 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32
-      'stax-econ,stax-macro'
-    end
-  else
-    "stax-#{book}"
-  end
-end
-
 TRUE_VALUES = ['true', 't', 'yes', 'y', '1']
 FALSE_VALUES = ['false', 'f', 'no', 'n', '0']
 
@@ -55,28 +37,33 @@ def map_collection(hash, cnx_id_map, chapter_number = 0)
 end
 
 def convert_row(row, cnx_id_map)
-  full_lo = row[1]
-  full_lo_matches = /\A(\w+)ch(\d+)-?s(\d+)-lo(\d+)\z/.match full_lo
-  book_original = full_lo_matches[1]
-  chapter = full_lo_matches[2]
-  book = BOOK_TAG_MAP.call(book_original, chapter)
-  section = full_lo_matches[3]
-  lo = full_lo_matches[4]
+  book = "stax-#{row[0]}"
 
-  full_id = row[0]
-  id = /\ACNX_CC_[\w]+_(\d+)\z/.match(full_id)[1]
+  chapter_matches = /\Ach(\d+)\z/.match row[1]
+  chapter = chapter_matches[1]
 
-  cnxmod = cnx_id_map[full_lo_matches[2].to_i][full_lo_matches[3].to_i] || ''
+  section_matches = /\As(\d+)\z/.match row[2]
+  section = section_matches[1]
 
-  type = 'concept-coach'
+  lo_matches = /\Alo(\d+)\z/.match row[3]
+  lo = lo_matches[1]
 
-  full_dok = row[5]
+  id = row[4]
+
+  cnxmod = cnx_id_map[chapter.to_i][section.to_i] || ''
+
+  type = row[5]
+
+  full_dok = row[7]
   dok = /\Adok(\d+)\z/.match(full_dok)[1]
 
-  full_blooms = row[6]
+  full_blooms = row[10]
   blooms = /\Ablooms-(\d+)\z/.match(full_blooms)[1]
 
-  art = row[7].downcase[0]
+  text_columns = row.slice(11..-1)
+  art_columns = text_columns.slice(1..2) + text_columns.slice(4..-1)
+
+  art = art_columns.any?{ |text| /!\[.+\]\(.+\)/.match text.to_s } ? 'y' : 'n'
 
   full_time = row[8]
   time = /\Atime-(\w+)\z/.match(full_time)[1]
@@ -98,12 +85,7 @@ def convert_row(row, cnx_id_map)
     req_choices = ''
   end
 
-  list = "#{book_original.capitalize} Chapter #{"%02d" % chapter}"
-
-  text_columns = row.slice(11..-1)
-
-  [book, chapter, section, lo, id, cnxmod, type,
-   dok, blooms, art, time, display, req_choices, list] + \
+  [book, chapter, section, lo, id, cnxmod, type, dok, blooms, art, time, display, req_choices] + \
   text_columns.map{ |text| text.to_s.gsub(/[\\_]{2,}/){ |match| match.gsub(/\\?_/, '\_') } }
 end
 
