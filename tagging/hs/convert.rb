@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require 'rubyXL'
+require 'roo'
 require 'axlsx'
 require 'httparty'
 require 'json'
@@ -105,18 +105,18 @@ unless book_cnx_url.nil?
   map_collection(response['tree'], cnx_id_map)
 end
 
-input_sheet = RubyXL::Parser.parse(ARGV[0]).worksheets[0]
+input_book = Roo::Excelx.new(ARGV[0])
 
 Axlsx::Package.new do |package|
-  package.workbook.add_worksheet(name: input_sheet.sheet_name || 'Assessments') do |output_sheet|
+  package.workbook.add_worksheet(name: input_book.default_sheet || 'Assessments') do |output_sheet|
     bold = output_sheet.styles.add_style b: true
     output_sheet.add_row OUTPUT_HEADERS, style: bold
 
-    input_sheet.each_with_index do |row, index|
-      next if index == 0
-
+    input_book.each_row_streaming(offset: 1, pad_cells: true).each_with_index do |row, index|
       values = 0.upto(row.size - 1).collect do |index|
-        (row[index] || OpenStruct.new).value
+        # Hack until Roo's new version with proper typecasting is released
+        val = (row[index] || OpenStruct.new).value
+        Integer(val) rescue val
       end
       next if values.compact.blank?
 

@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
 
-gem 'rubyXL'
-gem 'axlsx'
+gem 'roo'
+gem 'axlsx', '~> 2.1.0.pre'
 gem 'httparty'
