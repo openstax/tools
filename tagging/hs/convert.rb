@@ -40,17 +40,17 @@ def convert_row(row, cnx_id_map)
   book = row[0]
 
   chapter_matches = /\Ach(\d+)\z/.match row[1]
-  chapter = chapter_matches[1]
+  chapter = chapter_matches[1].to_i
 
   section_matches = /\As(\d+)\z/.match row[2]
-  section = section_matches[1]
+  section = section_matches[1].to_i
 
   lo_matches = /lo(\d+)\z/.match row[3]
   lo = lo_matches[1]
 
   id = row[4]
 
-  cnxmod = cnx_id_map[chapter.to_i][section.to_i] || ''
+  cnxmod = cnx_id_map[chapter][section] || ''
 
   type = row[5]
 
@@ -116,7 +116,7 @@ Axlsx::Package.new do |package|
       values = 0.upto(row.size - 1).collect do |index|
         # Hack until Roo's new version with proper typecasting is released
         val = (row[index] || OpenStruct.new).value
-        Integer(val) rescue val
+        Integer(val, 10) rescue val
       end
       next if values.compact.blank?
 

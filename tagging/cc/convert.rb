@@ -58,15 +58,15 @@ def convert_row(row, cnx_id_map)
   full_lo = row[1]
   full_lo_matches = /\A(\w+)ch(\d+)-?s(\d+)-lo(\d+)\z/.match full_lo
   book_original = full_lo_matches[1]
-  chapter = full_lo_matches[2]
+  chapter = full_lo_matches[2].to_i
   book = BOOK_TAG_MAP.call(book_original, chapter)
-  section = full_lo_matches[3]
+  section = full_lo_matches[3].to_i
   lo = full_lo_matches[4]
 
   full_id = row[0]
   id = /\ACNX_CC_[\w]+_(\d+)\z/.match(full_id)[1]
 
-  cnxmod = cnx_id_map[full_lo_matches[2].to_i][full_lo_matches[3].to_i] || ''
+  cnxmod = cnx_id_map[chapter][section] || ''
 
   type = 'concept-coach'
 
@@ -134,7 +134,7 @@ Axlsx::Package.new do |package|
       values = 0.upto(row.size - 1).collect do |index|
         # Hack until Roo's new version with proper typecasting is released
         val = (row[index] || OpenStruct.new).value
-        Integer(val) rescue val
+        Integer(val, 10) rescue val
       end
       next if values.compact.blank?
 
