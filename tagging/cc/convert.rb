@@ -15,6 +15,12 @@ BOOK_TAG_MAP = lambda do |book, chapter|
   book = book.downcase
 
   case book
+  when 'cph'
+    'stax-phys'
+  when 'bfm'
+    'stax-bio'
+  when 'soc2e'
+    'stax-soc'
   when 'econ'
     case chapter.to_i
     when 1, 2, 3, 4, 5, 33, 34
@@ -24,6 +30,8 @@ BOOK_TAG_MAP = lambda do |book, chapter|
     when 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32
       'stax-econ,stax-macro'
     end
+  when 'cob'
+    'stax-cbio'
   else
     "stax-#{book}"
   end
