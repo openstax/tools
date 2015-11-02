@@ -104,7 +104,7 @@ def convert_row(row, cnx_id_map)
 
   [book, chapter, section, lo, id, cnxmod, type,
    dok, blooms, art, time, display, req_choices, list] + \
-  text_columns.map{ |text| text.to_s.gsub(/[\\_]{2,}/){ |match| match.gsub(/\\?_/, '\_') } }
+  text_columns.map{ |text| text.to_s.gsub(/(?:\\?_){3,}/){ |match| match.gsub(/\\?_/, '\_') } }
 end
 
 if ARGV.length < 2 || ARGV.length > 3
