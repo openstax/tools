@@ -64,7 +64,7 @@ end
 
 def convert_row(row, cnx_id_map)
   full_lo = row[1]
-  full_lo_matches = /\A(\w+)ch(\d+)-?s(\d+)-lo(\d+)\z/.match full_lo
+  full_lo_matches = /\A(\w+)ch(\d+)-?s(\d+)-lo(\d+)\z/i.match full_lo
   book_original = full_lo_matches[1]
   chapter = full_lo_matches[2].to_i
   book = BOOK_TAG_MAP.call(book_original, chapter)
@@ -72,22 +72,22 @@ def convert_row(row, cnx_id_map)
   lo = full_lo_matches[4]
 
   full_id = row[0]
-  id = /\ACNX_CC_[\w]+_(\d+)\z/.match(full_id)[1]
+  id = /\ACNX_CC_[\w]+_(\d+)\z/i.match(full_id)[1]
 
   cnxmod = cnx_id_map[chapter][section] || ''
 
   type = 'concept-coach'
 
   full_dok = row[5]
-  dok = /\Adok(\d+)\z/.match(full_dok)[1]
+  dok = /\Adok(\d+)\z/i.match(full_dok)[1]
 
   full_blooms = row[6]
-  blooms = /\Ablooms-(\d+)\z/.match(full_blooms)[1]
+  blooms = /\Ablooms-(\d+)\z/i.match(full_blooms)[1]
 
   art = row[7].downcase[0]
 
   full_time = row[8]
-  time = /\Atime-(\w+)\z/.match(full_time)[1]
+  time = /\Atime-(\w+)\z/i.match(full_time)[1]
 
   display = 'multiple-choice'
 

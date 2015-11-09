@@ -39,13 +39,13 @@ end
 def convert_row(row, cnx_id_map)
   book = row[0]
 
-  chapter_matches = /\Ach(\d+)\z/.match row[1]
+  chapter_matches = /\Ach(\d+)\z/i.match row[1]
   chapter = chapter_matches[1].to_i
 
-  section_matches = /\As(\d+)\z/.match row[2]
+  section_matches = /\As(\d+)\z/i.match row[2]
   section = section_matches[1].to_i
 
-  lo_matches = /lo(\d+)\z/.match row[3]
+  lo_matches = /lo(\d+)\z/i.match row[3]
   lo = lo_matches[1]
 
   id = row[4]
@@ -55,10 +55,10 @@ def convert_row(row, cnx_id_map)
   type = row[5]
 
   full_dok = row[7]
-  dok = /\Adok(\d+)\z/.match(full_dok)[1]
+  dok = /\Adok(\d+)\z/i.match(full_dok)[1]
 
   full_blooms = row[10]
-  blooms = /\Ablooms-(\d+)\z/.match(full_blooms)[1]
+  blooms = /\Ablooms-(\d+)\z/i.match(full_blooms)[1]
 
   text_columns = row.slice(11..-1)
   art_columns = text_columns.slice(1..2) + text_columns.slice(4..-1)
@@ -66,7 +66,7 @@ def convert_row(row, cnx_id_map)
   art = art_columns.any?{ |text| /!\[.+\]\(.+\)/.match text.to_s } ? 'y' : 'n'
 
   full_time = row[8]
-  time = /\Atime-(\w+)\z/.match(full_time)[1]
+  time = /\Atime-(\w+)\z/i.match(full_time)[1]
 
   display = 'multiple-choice'
 
