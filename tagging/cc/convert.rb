@@ -138,7 +138,7 @@ Axlsx::Package.new do |package|
     bold = output_sheet.styles.add_style b: true
     output_sheet.add_row OUTPUT_HEADERS, style: bold
 
-    input_book.each_row_streaming(offset: 1, pad_cells: true).each_with_index do |row, index|
+    input_book.each_row_streaming(offset: 1, pad_cells: true).each_with_index do |row, row_index|
       values = 0.upto(row.size - 1).collect do |index|
         # Hack until Roo's new version with proper typecasting is released
         val = (row[index] || OpenStruct.new).value
@@ -149,7 +149,7 @@ Axlsx::Package.new do |package|
       begin
         output_sheet.add_row convert_row(values, cnx_id_map)
       rescue
-        puts "WARNING: Due to an error, skipped row ##{index + 1} containing #{values.inspect}"
+        puts "WARNING: Due to an error, skipped row ##{row_index + 2} containing #{values.inspect}"
       end
     end
   end
