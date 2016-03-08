@@ -4,6 +4,7 @@ require 'roo'
 require 'axlsx'
 require 'httparty'
 require 'json'
+require_relative '../cnx/lib/map_collection'
 
 OUTPUT_HEADERS = [
   'book', 'chapter', 'section', 'lo', 'id', 'cnxmod', 'ost-type', 'dok', 'blooms', 'art', 'time',
@@ -18,25 +19,7 @@ class Array
   alias_method :blank?, :empty?
 end
 
-def map_collection(hash, cnx_id_map, chapter_number = 0)
-  contents = hash['contents']
-  chapter_number += 1 if contents.none?{ |hash| hash['id'] == 'subcol' }
-
-  page_number = nil
-  contents.each do |entry|
-    if entry['id'] == 'subcol'
-      chapter_number = map_collection(entry, cnx_id_map, chapter_number)
-    else
-      page_number ||= entry['title'].start_with?('Introduction') ? 0 : 1
-      cnx_id_map[chapter_number][page_number] = entry['id'].split('@').first
-      page_number += 1
-    end
-  end
-
-  return chapter_number
-end
-
-def convert_row(row, cnx_id_map)
+def convert_row(row, cnx_book_hash)
   book = row[0]
 
   chapter_matches = /\Ach(\d+)\z/i.match row[1]
@@ -50,7 +33,7 @@ def convert_row(row, cnx_id_map)
 
   id = row[4]
 
-  cnxmod = cnx_id_map[chapter][section] || ''
+  cnxmod = extract_uuid(cnx_book_hash[chapter][section]) || ''
 
   type = row[5]
 
@@ -98,11 +81,11 @@ if ARGV.length < 2 || ARGV.length > 3
 end
 
 book_cnx_url = ARGV[2]
-cnx_id_map = Hash.new{ |hash, key| hash[key] = {} }
+cnx_book_hash = Hash.new{ |hash, key| hash[key] = {} }
 unless book_cnx_url.nil?
   response = HTTParty.get("#{book_cnx_url.chomp('.html').chomp('.json')}.json").to_hash
   puts "Using module UUIDs for #{response['title']}"
-  map_collection(response['tree'], cnx_id_map)
+  map_collection(response['tree'], cnx_book_hash)
 end
 
 input_book = Roo::Excelx.new(ARGV[0])
@@ -121,7 +104,7 @@ Axlsx::Package.new do |package|
       next if values.compact.blank?
 
       begin
-        output_sheet.add_row convert_row(values, cnx_id_map)
+        output_sheet.add_row convert_row(values, cnx_book_hash)
       rescue
         puts "WARNING: Due to an error, skipped row ##{index + 1} containing #{values.inspect}"
       end
