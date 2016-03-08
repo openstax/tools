@@ -4,7 +4,7 @@ require 'roo'
 require 'axlsx'
 require 'httparty'
 require 'json'
-require_relative '../cnx/lib/map_collection'
+require_relative '../../cnx/lib/map_collection'
 
 OUTPUT_HEADERS = [
   'book', 'chapter', 'section', 'lo', 'id', 'cnxmod', 'ost-type', 'dok', 'blooms', 'art', 'time',

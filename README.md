@@ -2,28 +2,32 @@
 
 Generic tools and scripts for OpenStax-related tasks
 
-## CNX
+## Installation
 
-### lookup_uuids.rb
+This repository is composed of several subprojects.
 
-This executable ruby script can lookup CNX module UUID's in a given CNX book archive url.
-
-First clone the repo, navigate to the cnx folder
-and run `bundle install` to install the required libraries:
+To install the dependencies for ruby projects, first clone the main repository
+then navigate to the appropriate subproject folder and run `bundle install`:
 
 ```sh
 git clone https://github.com/openstax/tools.git
-cd tools/cnx
+cd tools/project
 gem install bundler
 bundle install
 ```
 
 In case of errors, make sure you have Xcode and the Xcode command-line tools installed.
 
-Then run the following command to lookup CNX module UUID's:
+## Subprojects
+
+### CNX
+
+#### lookup_uuids.rb
+
+From the cnx folder, run the following command to lookup CNX module UUID's in a collection:
 
 ```sh
-bundle exec lookup_uuids.rb cnx_book_archive_url output_spreadsheet
+bundle exec ./lookup_uuids.rb cnx_book_archive_url output_spreadsheet
 ```
 
 Example:
@@ -32,39 +36,38 @@ Example:
 bundle exec ./lookup_uuids.rb http://archive.cnx.org/contents/031da8d3-b525-429c-80cf-6c8ed997733a@9.4 uuids.xlsx
 ```
 
-## Tagging
+### Tagging
 
-### convert.rb
+#### lookup_exercises.rb
 
-This executable ruby script can convert one of our spreadsheets to the "ideal" format.
-Only the first worksheet in the input excel file is converted.
-
-First clone the repo, navigate to the tagging folder
-and run `bundle install` to install the required libraries:
+From the tagging folder, run the following command to lookup exercises associated with an HS book:
 
 ```sh
-git clone https://github.com/openstax/tools.git
-cd tools/tagging
-gem install bundler
-bundle install
+bundle exec hs/lookup_exercises.rb hs_book_name output_spreadsheet [exercises_base_url]
 ```
 
-In case of errors, make sure you have Xcode and the Xcode command-line tools installed.
+Example:
 
-Then run the following command to convert a CC spreadsheet to the ideal format:
+```sh
+bundle exec hs/lookup_exercises.rb k12phys exercises.xlsx
+```
+
+#### convert.rb
+
+From the tagging folder, run the following command to convert a CC spreadsheet to the ideal format:
 
 ```sh
 bundle exec cc/convert.rb input_spreadsheet output_spreadsheet cnx_archive_url
 ```
 
-Or to convert a HS spreadsheet to the ideal format:
+Or to convert a HS spreadsheet to the ideal format, also from the tagging folder:
 
 ```sh
 bundle exec hs/convert.rb input_spreadsheet output_spreadsheet cnx_archive_url
 ```
 
 `cnx_archive_url` is optional. Specifying it will allow the script to get module ID's from CNX.
-It can be obtained by adding `archive` at the beginning of a cnx url.
+It can be obtained by adding `archive` to the beginning of a cnx url.
 
 Example:
 
