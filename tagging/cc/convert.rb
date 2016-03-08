@@ -4,6 +4,7 @@ require 'roo'
 require 'axlsx'
 require 'httparty'
 require 'json'
+require_relative '../cnx/lib/map_collection'
 
 OUTPUT_HEADERS = [
   'book', 'chapter', 'section', 'lo', 'id', 'cnxmod', 'ost-type', 'dok', 'blooms', 'art', 'time',
@@ -44,25 +45,7 @@ class Array
   alias_method :blank?, :empty?
 end
 
-def map_collection(hash, cnx_id_map, chapter_number = 0)
-  contents = hash['contents']
-  chapter_number += 1 if contents.none?{ |hash| hash['id'] == 'subcol' }
-
-  page_number = nil
-  contents.each do |entry|
-    if entry['id'] == 'subcol'
-      chapter_number = map_collection(entry, cnx_id_map, chapter_number)
-    else
-      page_number ||= entry['title'].start_with?('Introduction') ? 0 : 1
-      cnx_id_map[chapter_number][page_number] = entry['id'].split('@').first
-      page_number += 1
-    end
-  end
-
-  return chapter_number
-end
-
-def convert_row(row, cnx_id_map)
+def convert_row(row, cnx_book_hash)
   full_lo = row[1]
   full_lo_matches = /\A(\w+)ch(\d+)-?s(\d+)-lo(\d+)\z/i.match full_lo
   book_original = full_lo_matches[1]
@@ -74,7 +57,7 @@ def convert_row(row, cnx_id_map)
   full_id = row[0]
   id = /\ACNX_CC_[\w]+_(\d+)\z/i.match(full_id)[1]
 
-  cnxmod = cnx_id_map[chapter][section] || ''
+  cnxmod = extract_uuid(cnx_book_hash[chapter][section]) || ''
 
   type = 'concept-coach'
 
@@ -124,11 +107,11 @@ if ARGV.length < 2 || ARGV.length > 3
 end
 
 book_cnx_url = ARGV[2]
-cnx_id_map = Hash.new{ |hash, key| hash[key] = {} }
+cnx_book_hash = Hash.new{ |hash, key| hash[key] = {} }
 unless book_cnx_url.nil?
   response = HTTParty.get("#{book_cnx_url.chomp('.html').chomp('.json')}.json").to_hash
   puts "Using module UUIDs for #{response['title']}"
-  map_collection(response['tree'], cnx_id_map)
+  map_collection(response['tree'], cnx_book_hash)
 end
 
 input_book = Roo::Excelx.new(ARGV[0])
@@ -147,7 +130,7 @@ Axlsx::Package.new do |package|
       next if values.compact.blank?
 
       begin
-        output_sheet.add_row convert_row(values, cnx_id_map)
+        output_sheet.add_row convert_row(values, cnx_book_hash)
       rescue
         puts "WARNING: Due to an error, skipped row ##{row_index + 2} containing #{values.inspect}"
       end

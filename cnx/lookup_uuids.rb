@@ -3,50 +3,35 @@
 require 'axlsx'
 require 'httparty'
 require 'json'
+require_relative 'lib/map_collection'
 
-OUTPUT_HEADERS = ['Chapter', 'Section', 'UUID', 'Title']
-
-def map_collection(hash, cnx_id_map, chapter_number = 0)
-  contents = hash['contents']
-  chapter_number += 1 if contents.none?{ |hash| hash['id'] == 'subcol' }
-
-  page_number = nil
-  contents.each do |entry|
-    if entry['id'] == 'subcol'
-      chapter_number = map_collection(entry, cnx_id_map, chapter_number)
-    else
-      page_number ||= entry['title'].start_with?('Introduction') ? 0 : 1
-      cnx_id_map[chapter_number][page_number] = [entry['id'].split('@').first, entry['title']]
-      page_number += 1
-    end
-  end
-
-  return chapter_number
-end
+OUTPUT_HEADERS = ['UUID', 'Chapter', 'Section', 'Title']
 
 if ARGV.length != 2
   puts 'Usage: lookup_uuids.rb cnx_book_archive_url output_spreadsheet'
-  puts 'Writes an xlsx file with name output_spreadsheet containing a list of CNX'
-  puts 'chapter/section numbers and their module UUIDs for the given cnx_book_archive_url'
+  puts 'Writes an xlsx file with name output_spreadsheet containing a list of CNX module'
+  puts 'UUID\'s, chapter/section numbers and titles for the given cnx_book_archive_url'
   abort
 end
 
 cnx_book_archive_url = ARGV[0]
 output_filename = ARGV[1]
 
-cnx_id_map = Hash.new{ |hash, key| hash[key] = {} }
+cnx_book_hash = Hash.new{ |hash, key| hash[key] = {} }
 response = HTTParty.get("#{cnx_book_archive_url.chomp('.html').chomp('.json')}.json").to_hash
 puts "Using module UUIDs for #{response['title']}"
-map_collection(response['tree'], cnx_id_map)
+map_collection(response['tree'], cnx_book_hash)
 
 Axlsx::Package.new do |package|
   package.workbook.add_worksheet(name: "UUID's") do |output_sheet|
     bold = output_sheet.styles.add_style b: true
     output_sheet.add_row OUTPUT_HEADERS, style: bold
 
-    cnx_id_map.each do |chapter_number, sections|
-      sections.each do |section_number, uuid_title|
-        output_sheet.add_row [chapter_number, section_number] + uuid_title
+    cnx_book_hash.each do |chapter_number, section_hashes|
+      section_hashes.each do |section_number, section_hash|
+        uuid = extract_uuid(section_hash)
+        title = section_hash['title']
+        output_sheet.add_row [uuid, chapter_number, section_number, title]
       end
     end
   end
