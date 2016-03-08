@@ -2,6 +2,36 @@
 
 Generic tools and scripts for OpenStax-related tasks
 
+## CNX
+
+### lookup_uuids.rb
+
+This executable ruby script can lookup CNX module UUID's in a given CNX book archive url.
+
+First clone the repo, navigate to the cnx folder
+and run `bundle install` to install the required libraries:
+
+```sh
+git clone https://github.com/openstax/tools.git
+cd tools/cnx
+gem install bundler
+bundle install
+```
+
+In case of errors, make sure you have Xcode and the Xcode command-line tools installed.
+
+Then run the following command to lookup CNX module UUID's:
+
+```sh
+bundle exec lookup_uuids.rb cnx_book_archive_url output_spreadsheet
+```
+
+Example:
+
+```sh
+bundle exec ./lookup_uuids.rb http://archive.cnx.org/contents/031da8d3-b525-429c-80cf-6c8ed997733a@9.4 uuids.xlsx
+```
+
 ## Tagging
 
 ### convert.rb
