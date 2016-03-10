@@ -13,7 +13,7 @@ def convert_lo(lo)
   matches = /\A\w+-?ch(\d+)-?s(\d+)-?lo(\d+)\z/.match lo
   return '' if matches.nil?
 
-  "#{matches[1]}-#{matches[2]}-#{matches[3]}"
+  "#{matches[1].to_i}-#{matches[2].to_i}-#{matches[3].to_i}"
 end
 
 if ARGV.length != 2
@@ -31,7 +31,11 @@ Axlsx::Package.new do |package|
     output_sheet.add_row OUTPUT_HEADERS, style: bold
 
     input_book.each_row_streaming(offset: 1, pad_cells: true) do |row|
-      lo = row[0].value
+      lo_cell = row[0]
+      next if lo_cell.nil?
+      lo = lo_cell.value
+      next if lo.nil? || lo.empty?
+
       output_sheet.add_row [lo, convert_lo(lo)]
     end
   end
