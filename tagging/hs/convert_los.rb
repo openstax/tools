@@ -13,7 +13,7 @@ def convert_lo(lo)
   matches = /\A\w+-?ch(\d+)-?s(\d+)-?lo(\d+)\z/.match lo
   return '' if matches.nil?
 
-  "#{matches[1]}-#{matches[2]}-#{matches[3]}"
+  "#{matches[1].to_i}-#{matches[2].to_i}-#{matches[3].to_i}"
 end
 
 if ARGV.length != 2
