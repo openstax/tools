@@ -41,7 +41,7 @@ Tempfile.open(['uuids', '.xlsx']) do |file|
       bold = output_sheet.styles.add_style b: true
       output_sheet.add_row OUTPUT_HEADERS_WITH_EXERCISES, style: bold
 
-      temp_book.each_row_streaming(offset: 1, pad_cells: true).each_with_index do |row, index|
+      temp_book.each_row_streaming(offset: 1, pad_cells: true) do |row|
         values = 0.upto(row.size - 1).collect do |index|
           # Hack until Roo's new version with proper typecasting is released
           val = (row[index] || OpenStruct.new).value
