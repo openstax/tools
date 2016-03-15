@@ -1,5 +1,6 @@
 require_relative 'map_collection'
 require 'hashie/mash'
+require 'httparty'
 require 'oga'
 
 # Download chapters/sections from a CNX book and parse out
@@ -12,8 +13,8 @@ module CNX
     def self.fetch(url)
       # Regex turns a URL like http://cnx.org/contents/GFy_h8cu into http://archive.cnx.org/contents/GFy_h8cu.json
       # while still working if it's passed an already valid url like: archive.cnx.org/contents/GFy_h8cu.json
-      url.sub!(/^.*(cnx\.org.*)(:?\.\w{4})*$/, 'http://archive.\1.json')
-
+      url.sub!(/^.*(cnx\.org.*?)(:?\.\w{4})*$/, 'http://archive.\1.json')
+      puts "Fetching from #{url}"
       Book.new( HTTParty.get(url).to_hash )
     end
 
