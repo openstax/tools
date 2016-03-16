@@ -144,6 +144,9 @@ Axlsx::Package.new do |package|
     end
   end
 
+  # Show the first sheet when opened
+  package.workbook.add_view active_tab: 0
+
   dest_file = options[:out] || "vocabulary.xlsx"
   if package.serialize(dest_file)
     puts "Wrote spreadsheet to #{dest_file}"
