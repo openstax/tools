@@ -16,6 +16,9 @@ OptionParser.new do |opts|
   opts.on("--chapters 1,2,3,4", Array, "Chapters to extract")   { |chp| options[:chapters] = chp }
   opts.on("--lo-xlsx [PATH]", "Path to a spreadsheet with LOs") { |lo | options[:lo_xlsx] = lo }
   opts.on("--output  [PATH]",  "Output spreadsheet")            { |out| options[:out] = out }
+  opts.on("--distractors [Number]", Integer, "Number of distractor columns to include (defaults to 3)") { |n|
+    options[:distractors] = n
+  }
   opts.on_tail("-h", "--help", "Show this message")             { puts opts; exit }
 end.parse!
 
@@ -25,6 +28,8 @@ end.parse!
     exit
   end
 end
+options[:distractors] ||= 3
+
 puts "Performing task with options: #{options.inspect}"
 
 book = CNX::Book.fetch(options[:cnx_url])
@@ -40,19 +45,16 @@ Axlsx::Package.new do |package|
   package.workbook.add_worksheet(name: "Terms") do |sheet|
     bold = sheet.styles.add_style b: true
     center = sheet.styles.add_style alignment: {horizontal: :center}
-    sheet.add_row(['Vocab #', 'Module', 'Term', 'LO', 'Distractor 1',
-                   'Distractor 2', 'Distractor 3', 'Definition'], style: bold)
+    sheet.add_row(['Vocab #', 'Module', 'Term', 'LO'] +
+                  options[:distractors].times.map{|n| "Distractor #{n+1}" } +
+                  ['Definition'], style: bold)
 
     chapters.each do | chapter |
       chapter.each do | section |
         section.glossary_terms.each do | gt |
           row = [
-            cs_row_num+=1,
-            "#{chapter.number}-#{section.number}",
-            gt.term,
-            '', '', '', '',
-            gt.definition
-          ]
+            cs_row_num+=1, "#{chapter.number}-#{section.number}", gt.term, ''
+          ] + ([''] * options[:distractors]) + [ gt.definition ]
           sheet.add_row(row)
         end
       end
@@ -61,7 +63,9 @@ Axlsx::Package.new do |package|
     sheet.col_style 0, center, row_offset: 1
     sheet.col_style 1, center, row_offset: 1
 
-    sheet.add_data_validation("$E$2:$G$#{cs_row_num+1}", {
+    last_distractor = Axlsx.col_ref(options[:distractors] + 3)
+    # validation for distractors
+    sheet.add_data_validation("$E$2:$#{last_distractor}$#{cs_row_num+1}", {
       :type => :list,
       :formula1 => "$C$2:$C$#{cs_row_num+1}",
       :showDropDown => false,
@@ -70,6 +74,8 @@ Axlsx::Package.new do |package|
       :error => 'Please use the dropdown selector to choose a valid term',
       :errorStyle => :stop,
       :showInputMessage => false})
+
+
   end
 
   # Only create the "LO Map" tab if a lookup spreadsheet was given
@@ -112,7 +118,6 @@ Axlsx::Package.new do |package|
           :error => 'Please use the dropdown selector to choose a valid LO',
           :errorStyle => :stop,
           :showInputMessage => false})
-
     end
   end
 
