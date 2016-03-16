@@ -6,6 +6,8 @@ require 'axlsx'
 require 'json'
 require 'roo'
 
+PROTECTION_PASSWORD = 'openstax'
+
 require 'pry' # REMOVE!
 
 options = {}
@@ -43,7 +45,9 @@ Axlsx::Package.new do |package|
   cs_row_num = 0
 
   package.workbook.add_worksheet(name: "Terms") do |sheet|
+    sheet.sheet_protection.password = PROTECTION_PASSWORD
     bold = sheet.styles.add_style b: true
+    unlocked = sheet.styles.add_style locked: false
     center = sheet.styles.add_style alignment: {horizontal: :center}
     sheet.add_row(['Vocab #', 'Module', 'Term', 'LO'] +
                   options[:distractors].times.map{|n| "Distractor #{n+1}" } +
@@ -62,6 +66,9 @@ Axlsx::Package.new do |package|
 
     sheet.col_style 0, center, row_offset: 1
     sheet.col_style 1, center, row_offset: 1
+    3.upto(options[:distractors] + 3){ |col|
+      sheet.col_style( col, unlocked, row_offset: 1 )
+    }
 
     last_distractor = Axlsx.col_ref(options[:distractors] + 3)
     # validation for distractors
@@ -74,6 +81,13 @@ Axlsx::Package.new do |package|
       :error => 'Please use the dropdown selector to choose a valid term',
       :errorStyle => :stop,
       :showInputMessage => false})
+
+    sheet.sheet_view.pane do |pane|
+      pane.top_left_cell = "A2"
+      pane.state = :frozen
+      pane.y_split = 1
+      pane.active_pane = :bottom_right
+    end
 
 
   end
@@ -92,6 +106,8 @@ Axlsx::Package.new do |package|
 
     lo_rows = 0
     package.workbook.add_worksheet(name: "LO Map") do |sheet|
+      sheet.sheet_protection.password = PROTECTION_PASSWORD
+
       bold = sheet.styles.add_style b: true
       center = sheet.styles.add_style alignment: {horizontal: :center}
       sheet.add_row ['LO', 'LO Text'], style: bold
@@ -106,6 +122,13 @@ Axlsx::Package.new do |package|
         end
       end
       sheet.col_style 0, center, row_offset: 1
+
+      sheet.sheet_view.pane do |pane|
+        pane.top_left_cell = "A2"
+        pane.state = :frozen
+        pane.y_split = 1
+        pane.active_pane = :bottom_right
+      end
 
       # Add validation on LO column
       package.workbook.sheet_by_name('Terms')
