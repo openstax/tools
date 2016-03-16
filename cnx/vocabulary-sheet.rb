@@ -116,9 +116,10 @@ Axlsx::Package.new do |package|
     end
   end
 
-  if package.serialize(options[:out] || "vocabulary.xlsx")
-    puts 'Wrote spreadsheet'
+  dest_file = options[:out] || "vocabulary.xlsx"
+  if package.serialize(dest_file)
+    puts "Wrote spreadsheet to #{dest_file}"
   else
-    puts 'ERROR: Failed to write spreadsheet'
+    puts "ERROR: Failed to write spreadsheet to #{dest_file}"
   end
 end
