@@ -64,6 +64,9 @@ Axlsx::Package.new do |package|
       puts "Adding chapter # #{chapter.number}"
       chapter.each do | section |
         section.glossary_terms.each do | gt |
+          if gt.inner_html
+            sheet.add_comment :ref => "C#{cs_row_num+2}", :author=>'MATH', :visible => false, :text => gt.inner_html
+          end
           row = [
             cs_row_num+=1, "#{chapter.number}-#{section.number}", gt.term, ''
           ] + ([''] * options[:distractors]) + [ gt.definition ]

@@ -39,7 +39,12 @@ module CNX
       def glossary_terms
         Enumerator.new do |terms|
           contents.css('[data-type="glossary"] .definition').each do | term |
-            terms << GlossaryTerm.new(term: term.css('dt').text, definition: term.css('dd').text)
+            dt = term.css('dt').first
+            term = GlossaryTerm.new(term: dt.text.gsub(/\n\s*/,''), definition: term.css('dd').text)
+            if dt.css('math').any?
+              term.inner_html = dt.to_xml
+            end
+            terms << term
           end
         end
       end
