@@ -41,11 +41,18 @@ chapters = if options[:chapters]
              book.to_a
            end
 
+def protect_worksheet(sheet)
+    sheet.sheet_protection.password = PROTECTION_PASSWORD
+    sheet.sheet_protection.format_cells   = false
+    sheet.sheet_protection.format_rows    = false
+    sheet.sheet_protection.format_columns = false
+end
+
 Axlsx::Package.new do |package|
   cs_row_num = 0
 
   package.workbook.add_worksheet(name: "Terms") do |sheet|
-    sheet.sheet_protection.password = PROTECTION_PASSWORD
+    protect_worksheet(sheet)
     bold = sheet.styles.add_style b: true
     unlocked = sheet.styles.add_style locked: false
     center = sheet.styles.add_style alignment: {horizontal: :center}
@@ -107,8 +114,7 @@ Axlsx::Package.new do |package|
 
     lo_rows = 0
     package.workbook.add_worksheet(name: "LO Map") do |sheet|
-      sheet.sheet_protection.password = PROTECTION_PASSWORD
-
+      protect_worksheet(sheet)
       bold = sheet.styles.add_style b: true
       center = sheet.styles.add_style alignment: {horizontal: :center}
       sheet.add_row ['LO', 'LO Text'], style: bold
