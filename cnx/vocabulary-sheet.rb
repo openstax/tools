@@ -54,6 +54,7 @@ Axlsx::Package.new do |package|
                   ['Definition'], style: bold)
 
     chapters.each do | chapter |
+      puts "Adding chapter # #{chapter.number}"
       chapter.each do | section |
         section.glossary_terms.each do | gt |
           row = [
