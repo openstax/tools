@@ -6,6 +6,15 @@ require 'axlsx'
 require 'json'
 require 'roo'
 
+# Roo doesn't currently read the comment cells with MATHML properly.
+# It takes the first matching `./text/r/t` using at_xpath, when it really needs the last
+# https://github.com/roo-rb/roo/blob/1586ef279162f55a4e3b3e692d57b2b4ae4c8b34/lib/roo/excelx/comments.rb#L16
+# To obtain the mathml it's necessary to:
+# doc=Roo::Excelx.new('vocabulary.xlsx')
+# sheet = x.sheet_for('Terms')
+# ex=Roo::Excelx::Extractor.new(sheet.comments_files.first)
+# ex.send(:doc).xpath('//comments/commentList/comment').first.xpath('./text/r').last
+
 PROTECTION_PASSWORD = 'openstax'
 
 require 'pry' # REMOVE!
