@@ -12,6 +12,32 @@ OUTPUT_HEADERS = [
   'feedback-a', 'b', 'feedback-b', 'c', 'feedback-c', 'd', 'feedback-d'
 ]
 
+BOOK_TAG_MAP = lambda do |book, chapter|
+  book = book.downcase
+
+  case book
+  when 'cph'
+    'stax-phys'
+  when 'bfm'
+    'stax-bio'
+  when 'soc2e'
+    'stax-soc'
+  when 'econ'
+    case chapter.to_i
+    when 1, 2, 3, 4, 5, 33, 34
+      'stax-econ,stax-micro,stax-macro'
+    when 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18
+      'stax-econ,stax-micro'
+    when 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32
+      'stax-econ,stax-macro'
+    end
+  when 'cob'
+    'stax-cbio'
+  else
+    "stax-#{book}"
+  end
+end
+
 TRUE_VALUES = ['true', 't', 'yes', 'y', '1']
 FALSE_VALUES = ['false', 'f', 'no', 'n', '0']
 
@@ -20,33 +46,28 @@ class Array
 end
 
 def convert_row(row, cnx_book_hash)
-  book = row[0]
+  full_lo = row[1]
+  full_lo_matches = /\A(\w+)ch(\d+)-?s(\d+)-lo(\d+)\z/i.match full_lo
+  book_original = full_lo_matches[1]
+  chapter = full_lo_matches[2].to_i
+  book = BOOK_TAG_MAP.call(book_original, chapter)
+  section = full_lo_matches[3].to_i
+  lo = full_lo_matches[4]
 
-  chapter_matches = /\Ach(\d+)\z/i.match row[1]
-  chapter = chapter_matches[1].to_i
-
-  section_matches = /\As(\d+)\z/i.match row[2]
-  section = section_matches[1].to_i
-
-  lo_matches = /lo(\d+)\z/i.match row[3]
-  lo = lo_matches[1]
-
-  id = row[4]
+  full_id = row[0]
+  id = /\ACNX_CC_[\w]+_(\d+)\z/i.match(full_id)[1]
 
   cnxmod = extract_uuid(cnx_book_hash[chapter][section]) || ''
 
-  type = row[5]
+  type = 'concept-coach'
 
-  full_dok = row[7]
+  full_dok = row[5]
   dok = /\Adok(\d+)\z/i.match(full_dok)[1]
 
-  full_blooms = row[10]
+  full_blooms = row[6]
   blooms = /\Ablooms-(\d+)\z/i.match(full_blooms)[1]
 
-  text_columns = row.slice(11..-1)
-  art_columns = text_columns.slice(1..2) + text_columns.slice(4..-1)
-
-  art = art_columns.any?{ |text| /!\[.+\]\(.+\)/.match text.to_s } ? 'y' : 'n'
+  art = row[7].downcase[0]
 
   full_time = row[8]
   time = /\Atime-(\w+)\z/i.match(full_time)[1]
@@ -68,12 +89,17 @@ def convert_row(row, cnx_book_hash)
     req_choices = ''
   end
 
-  [book, chapter, section, lo, id, cnxmod, type, dok, blooms, art, time, display, req_choices] + \
+  list = "#{book_original.capitalize} Chapter #{"%02d" % chapter}"
+
+  text_columns = row.slice(11..-1)
+
+  [book, chapter, section, lo, id, cnxmod, type,
+   dok, blooms, art, time, display, req_choices, list] + \
   text_columns.map{ |text| text.to_s.gsub(/(?:\\?_){3,}/){ |match| match.gsub(/\\?_/, '\_') } }
 end
 
 if ARGV.length < 2 || ARGV.length > 3
-  puts 'Usage: convert.rb input_filename output_filename [book_cnx_url]'
+  puts 'Usage: cc/convert_spreadsheet.rb input_filename output_filename [book_cnx_url]'
   puts 'Only the first sheet of the input spreadsheet will be used'
   puts 'If a book URL is specified, the chapter/section for each exercise'
   puts 'will be used to pull the page UUID according to the book structure'
@@ -106,7 +132,7 @@ Axlsx::Package.new do |package|
       begin
         output_sheet.add_row convert_row(values, cnx_book_hash)
       rescue
-        puts "WARNING: Due to an error, skipped row ##{row_index + 1} containing #{values.inspect}"
+        puts "WARNING: Due to an error, skipped row ##{row_index + 2} containing #{values.inspect}"
       end
     end
   end
