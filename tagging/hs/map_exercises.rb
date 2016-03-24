@@ -99,6 +99,9 @@ input_sheet.each_row_streaming(offset: 1, pad_cells: true) do |row|
   end
 end
 
+no_los = lo_map.empty?
+puts 'No LO mappings found (using module mappings)' if no_los
+
 Axlsx::Package.new do |package|
   package.workbook.add_worksheet(name: 'Map') do |output_sheet|
     bold = output_sheet.styles.add_style b: true
@@ -121,8 +124,8 @@ Axlsx::Package.new do |package|
             matches = lo_regex.match(tag)
             matches[1].reverse.chomp('0').reverse unless matches.nil?
           end.compact.sort
-          puts "WARNING: No LO matching the section tag found in: #{tags.inspect}" \
-            if lo_numbers.empty?
+          puts "WARNING: LO absent or did not match the section tag for #{exercise_hash['number']
+               } (tags: #{tags.inspect})" if lo_numbers.empty?
           lo_numbers
         end
 
@@ -134,6 +137,8 @@ Axlsx::Package.new do |package|
           cnxmod_tags = []
           lo_tags = []
           if last_lo.nil?
+            puts "WARNING: No LO mappings found for #{exercise_numbers
+                 } (using module mappings)" unless no_los
             last_chapter_num = last_section[0]
             last_section_num = last_section[1]
 
