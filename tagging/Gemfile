@@ -2,5 +2,7 @@ source 'https://rubygems.org'
 
 gem 'roo'
 gem 'axlsx', '~> 2.1.0.pre'
+gem 'oga'
+gem 'hashie'
 gem 'httparty'
 gem 'byebug'

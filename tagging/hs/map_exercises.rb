@@ -7,15 +7,9 @@ require_relative '../../cnx/lib/book'
 
 OUTPUT_HEADERS = ['Exercises', 'New Tags']
 
-BOOK_MAP = {
-  'k12phys' => {
-    col_name: 'stax-phys',
-    col_uuid: '334f8b61-30eb-4475-8e05-5260a4866b4b' # Change me
-  },
-  'apbio' => {
-    col_name: 'stax-bio',
-    col_uuid: '334f8b61-30eb-4475-8e05-5260a4866b4b' # Change me
-  }
+BOOK_MAPS = {
+  'k12phys' => { col_name: 'stax-phys', col_uuid: '031da8d3-b525-429c-80cf-6c8ed997733a' },
+  'apbio' => { col_name: 'stax-bio', col_uuid: '185cbf87-c72e-48f5-b51e-f14f21b5eabd' }
 }
 
 class Array
@@ -33,8 +27,15 @@ if ARGV.length < 3 || ARGV.length > 4
 end
 
 hs_book_name = ARGV[0]
-col_book_name = BOOK_MAP[hs_book_name][:col_name]
-col_book_uuid = BOOK_MAP[hs_book_name][:col_uuid]
+book_map = BOOK_MAPS[hs_book_name]
+raise "Invalid HS book name: #{hs_book_name}" if book_map.nil?
+
+col_book_name = book_map[:col_name]
+col_book_uuid = book_map[:col_uuid]
+
+book_url = "https://archive.cnx.org/contents/#{col_book_uuid}"
+book = CNX::Book.fetch(book_url)
+
 input_filename = ARGV[1]
 output_filename = ARGV[2]
 exercises_base_url = ARGV[3] || 'https://exercises.openstax.org'
@@ -43,7 +44,7 @@ tag_map = Hash.new{ |hash, key| hash[key] = Hash.new{ |hash, key| hash[key] = {}
 
 input_sheet = Roo::Excelx.new(input_filename)
 input_sheet.each_row_streaming(offset: 1, pad_cells: true) do |row|
-  values = 0.upto(row.size - 1).map{ |index| (row[index] || OpenStruct.new).value }
+  values = 0.upto(row.size - 1).map{ |index| (row[index] || OpenStruct.new).value.to_s }
   next if values.compact.blank?
 
   origins = values[0].split(',')
@@ -51,16 +52,13 @@ input_sheet.each_row_streaming(offset: 1, pad_cells: true) do |row|
 
   orig_matches = origins.map do |origin|
     /(\d+)-(\d+)-(\d+)/.match(origin) || /(\d+).(\d+)/.match(origin) || \
-      raise "Invalid Origin: #{origin}"
+      raise("Invalid Origin: #{origin}")
   end
 
   dest_matches = destinations.map do |destination|
     /(\d+)-(\d+)-(\d+)/.match(destination) || /(\d+).(\d+)/.match(destination) || \
-      raise "Invalid Destination: #{destination}"
+      raise("Invalid Destination: #{destination}")
   end
-
-  book_url = "https://archive.cnx.org/contents/#{col_book_uuid}"
-  dest_book = CNX::Book.new(book_url)
 
   orig_matches.each do |orig_match|
     orig_chapter = orig_match[1]
@@ -72,7 +70,10 @@ input_sheet.each_row_streaming(offset: 1, pad_cells: true) do |row|
       dest_section = dest_match[2]
       dest_lo = dest_match[3]
 
-      dest_uuid = dest_book[dest_chapter][dest_section].id
+      section = book.chapters[dest_chapter.to_i].sections[dest_section.to_i]
+      raise "No such chapter/section in #{col_book_name}: #{dest_match[0]}" if section.nil?
+
+      dest_uuid = section.id.split('@').first
       dest_uuid_tag = "cnxmod:#{dest_uuid}"
 
       next [dest_uuid_tag] if dest_lo.nil?
@@ -94,14 +95,21 @@ Axlsx::Package.new do |package|
     bold = output_sheet.styles.add_style b: true
     output_sheet.add_row OUTPUT_HEADERS, style: bold
 
-    book_map.each do |chapter_num, chapter_map|
+    tag_map.each do |chapter_num, chapter_map|
       chapter_map.each do |section_num, section_map|
         section_tag = "#{hs_book_name}-ch%02d-s%02d" % [chapter_num, section_num]
-        lo_regex = Regexp.new "\A#{section_tag}-lo(\\d+)\z"
+        lo_regex = Regexp.new "\\A#{section_tag}-(?:ap)?lo-?([\\d-]+)\\z"
         exercises_hash = HTTParty.get("#{exercises_base_url}/api/exercises?q=tag:#{section_tag}")
                                  .to_hash
         grouped_exercises = exercises_hash['items'].group_by do |exercise_hash|
-          exercise_hash['tags'].map{ |tag| lo_regex.match(tag).try(:[], 1) }.compact.sort
+          tags = exercise_hash['tags']
+          lo_numbers = tags.map do |tag|
+            matches = lo_regex.match(tag)
+            matches[1].reverse.chomp('0').reverse unless matches.nil?
+          end.compact.sort
+          puts "WARNING: No LO matching the section tag found in: #{tags.inspect}" \
+            if lo_numbers.empty?
+          lo_numbers
         end
 
         grouped_exercises.each do |lo_numbers, exercises|
@@ -114,8 +122,8 @@ Axlsx::Package.new do |package|
   end
 
   if package.serialize(output_filename)
-    puts 'Wrote exercise mapping file'
+    puts "Wrote exercise mapping file #{output_filename}"
   else
-    puts 'ERROR: Failed to write exercises mapping file'
+    puts "ERROR: Failed to write exercises mapping file #{output_filename}"
   end
 end

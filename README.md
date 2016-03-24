@@ -94,5 +94,5 @@ that will be associated with those exercises in the second column.
 Example:
 
 ```sh
-bundle exec hs/map_exercises.rb k12phys map.xlsx tags.xlsx https://exercises.openstax.org
+bundle exec hs/map_exercises.rb k12phys physmap.xlsx phystags.xlsx https://exercises.openstax.org
 ```

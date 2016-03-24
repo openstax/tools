@@ -15,7 +15,7 @@ end
 cnx_book_url = ARGV[0]
 output_filename = ARGV[1]
 
-book = CNX::Book.new(cnx_book_url)
+book = CNX::Book.fetch(cnx_book_url)
 
 Axlsx::Package.new do |package|
   package.workbook.add_worksheet(name: "UUID's") do |output_sheet|
