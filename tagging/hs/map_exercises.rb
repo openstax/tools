@@ -5,7 +5,7 @@ require 'axlsx'
 require 'httparty'
 require_relative '../../cnx/lib/book'
 
-OUTPUT_HEADERS = ['Exercises', 'CNXMOD Tags', 'LO Tags']
+OUTPUT_HEADERS = ['Exercises', 'CNXMOD Tags', 'LO Tags', 'Extra Tags']
 
 BOOK_MAPS = {
   'k12phys' => { col_name: 'stax-phys', col_uuid: '031da8d3-b525-429c-80cf-6c8ed997733a' },
@@ -136,6 +136,8 @@ Axlsx::Package.new do |package|
 
           cnxmod_tags = []
           lo_tags = []
+          extra_tags = []
+
           if last_lo.nil?
             puts "WARNING: No LO mappings found for #{exercise_numbers
                  } (using module mappings)" unless no_los
@@ -143,8 +145,9 @@ Axlsx::Package.new do |package|
             last_section_num = last_section[1]
 
             cnxmod_tags = dest_sections.map do |chapter_num, section_num|
-              prefix = (chapter_num == last_chapter_num && section_num == last_section_num) ? \
-                         '' : 'alternate-'
+              alternate = chapter_num != last_chapter_num || section_num != last_section_num
+              extra_tags = ['filter-type:multi-cnxmod'] if alternate
+              prefix = alternate ? 'alternate-' : ''
               uuid = dest_uuid_map[chapter_num][section_num]
               "#{prefix}cnxmod:#{uuid}"
             end
@@ -155,8 +158,9 @@ Axlsx::Package.new do |package|
             los.group_by do |chapter_num, section_num, lo_num|
               [chapter_num, section_num]
             end.each do |(chapter_num, section_num), los|
-              prefix = (chapter_num == last_chapter_num && section_num == last_section_num) ? \
-                         '' : 'alternate-'
+              alternate = chapter_num != last_chapter_num || section_num != last_section_num
+              extra_tags = ['filter-type:multi-cnxmod'] if alternate
+              prefix = alternate ? 'alternate-' : ''
               cnxmod_tags << "#{prefix}cnxmod:#{dest_uuid_map[chapter_num][section_num]}"
               lo_tags += los.map do |_, _, lo_num|
                 "#{prefix}lo:#{col_book_name}:#{chapter_num}-#{section_num}-#{lo_num}"
@@ -164,7 +168,8 @@ Axlsx::Package.new do |package|
             end
           end
 
-          output_sheet.add_row [exercise_numbers, cnxmod_tags.join(','), lo_tags.join(',')]
+          output_sheet.add_row [exercise_numbers, cnxmod_tags.join(','),
+                                lo_tags.join(','), extra_tags.join(',')]
         end
       end
     end
