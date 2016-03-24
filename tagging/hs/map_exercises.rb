@@ -5,7 +5,7 @@ require 'axlsx'
 require 'httparty'
 require_relative '../../cnx/lib/book'
 
-OUTPUT_HEADERS = ['Exercises', 'New Tags']
+OUTPUT_HEADERS = ['Exercises', 'CNXMOD Tags', 'LO Tags']
 
 BOOK_MAPS = {
   'k12phys' => { col_name: 'stax-phys', col_uuid: '031da8d3-b525-429c-80cf-6c8ed997733a' },
@@ -40,7 +40,12 @@ input_filename = ARGV[1]
 output_filename = ARGV[2]
 exercises_base_url = ARGV[3] || 'https://exercises.openstax.org'
 
-tag_map = Hash.new{ |hash, key| hash[key] = Hash.new{ |hash, key| hash[key] = {} } }
+cnxmod_map = Hash.new{ |hash, key| hash[key] = Hash.new{ |hash, key| hash[key] = Set.new } }
+lo_map = Hash.new do |hash, key|
+  hash[key] = Hash.new do |hash, key|
+    hash[key] = Hash.new{ |hash, key| hash[key] = [] }
+  end
+end
 
 input_sheet = Roo::Excelx.new(input_filename)
 input_sheet.each_row_streaming(offset: 1, pad_cells: true) do |row|
@@ -65,7 +70,7 @@ input_sheet.each_row_streaming(offset: 1, pad_cells: true) do |row|
     orig_section = orig_match[2]
     orig_lo = orig_match[3]
 
-    dest_tags = dest_matches.flat_map do |dest_match|
+    dest_matches.each do |dest_match|
       dest_chapter = dest_match[1]
       dest_section = dest_match[2]
       dest_lo = dest_match[3]
@@ -76,16 +81,12 @@ input_sheet.each_row_streaming(offset: 1, pad_cells: true) do |row|
       dest_uuid = section.id.split('@').first
       dest_uuid_tag = "cnxmod:#{dest_uuid}"
 
-      next [dest_uuid_tag] if dest_lo.nil?
+      cnxmod_map[orig_chapter][orig_section] << dest_uuid_tag
+
+      next if orig_lo.nil? || dest_lo.nil?
 
       dest_lo_tag = "lo:#{col_book_name}:#{dest_chapter}-#{dest_section}-#{dest_lo}"
-      [dest_uuid_tag, dest_lo_tag]
-    end.uniq
-
-    if orig_lo.nil?
-      tag_map[orig_chapter][orig_section].default = dest_tags
-    else
-      tag_map[orig_chapter][orig_section][orig_lo] = dest_tags
+      lo_map[orig_chapter][orig_section][orig_lo] << dest_lo_tag
     end
   end
 end
@@ -95,8 +96,11 @@ Axlsx::Package.new do |package|
     bold = output_sheet.styles.add_style b: true
     output_sheet.add_row OUTPUT_HEADERS, style: bold
 
-    tag_map.each do |chapter_num, chapter_map|
-      chapter_map.each do |section_num, section_map|
+    cnxmod_map.each do |chapter_num, chapter_cnxmod_map|
+      chapter_lo_map = lo_map[chapter_num]
+      chapter_cnxmod_map.each do |section_num, cnxmod_tags_set|
+        cnxmod_tags = cnxmod_tags_set.to_a.join(',')
+        section_lo_map = chapter_lo_map[section_num]
         section_tag = "#{hs_book_name}-ch%02d-s%02d" % [chapter_num, section_num]
         lo_regex = Regexp.new "\\A#{section_tag}-(?:ap)?lo-?([\\d-]+)\\z"
         exercises_hash = HTTParty.get("#{exercises_base_url}/api/exercises?q=tag:#{section_tag}")
@@ -114,8 +118,8 @@ Axlsx::Package.new do |package|
 
         grouped_exercises.each do |lo_numbers, exercises|
           exercise_numbers = exercises.map{ |exercise| exercise['number'] }.join(',')
-          new_tags = lo_numbers.flat_map{ |lo_number| section_map[lo_number] }.uniq.join(',')
-          output_sheet.add_row [exercise_numbers, new_tags]
+          lo_tags = lo_numbers.flat_map{ |lo_number| section_lo_map[lo_number] }.uniq.join(',')
+          output_sheet.add_row [exercise_numbers, cnxmod_tags, lo_tags]
         end
       end
     end
