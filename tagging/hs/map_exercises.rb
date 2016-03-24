@@ -23,11 +23,11 @@ class Array
 end
 
 if ARGV.length < 3 || ARGV.length > 4
-  puts 'Usage: cc/map_exercises.rb hs_book_name input_spreadsheet output_spreadsheet [exercises_base_url]'
+  puts 'Usage: hs/map_exercises.rb hs_book_name input_spreadsheet output_spreadsheet [exercises_base_url]'
   puts 'Takes as input a spreadsheet with the following columns:'
   puts '1. Origin LO or book location (chapter.section)'
   puts '2. Target LO or book location'
-  puts 'Writes an xlsx file with name output_spreadsheet containing a list of Exercise UID\'s'
+  puts 'Writes an xlsx file with name output_spreadsheet containing a list of Exercise numbers'
   puts 'and the tags that will be associated with those exercises'
   abort
 end

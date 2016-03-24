@@ -74,3 +74,25 @@ Example:
 ```sh
 bundle exec cc/convert_spreadsheet.rb input.xlsx output.xlsx http://archive.cnx.org/contents/031da8d3-b525-429c-80cf-6c8ed997733a@9.4
 ```
+
+#### map_exercises.rb
+
+From the tagging folder, run the following command to map exercises
+in an HS book to the corresponding Col book:
+
+```sh
+bundle exec hs/map_exercises.rb hs_book_name input_spreadsheet output_spreadsheet [exercises_base_url]
+```
+
+The input spreadsheet must contain a mapping of LO's and/or module chapter.section, with the
+entry for the origin book in the first column and the entry for the destination book
+in the second column.
+
+The output spreadsheet contains a list of exercise numbers in the first column and a list of tags
+that will be associated with those exercises in the second column.
+
+Example:
+
+```sh
+bundle exec hs/map_exercises.rb k12phys map.xlsx tags.xlsx https://exercises.openstax.org
+```
