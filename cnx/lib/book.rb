@@ -52,6 +52,7 @@ module CNX
 
     class Chapter
       include Enumerable
+
       attr_reader :number
 
       def initialize(number, sections)
@@ -60,6 +61,10 @@ module CNX
 
       def each
         @sections.each{ |number, attrs| yield Section.new(number, attrs) }
+      end
+
+      def sections
+        @sections_array ||= to_a
       end
     end
 
@@ -78,6 +83,9 @@ module CNX
         @toc.each{ |chapter_number, section_hashes| yield Chapter.new(chapter_number, section_hashes) }
       end
 
+      def chapters
+        @chapters_array ||= to_a
+      end
     end
 
   end
