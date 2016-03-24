@@ -40,10 +40,14 @@ input_filename = ARGV[1]
 output_filename = ARGV[2]
 exercises_base_url = ARGV[3] || 'https://exercises.openstax.org'
 
-cnxmod_map = Hash.new{ |hash, key| hash[key] = Hash.new{ |hash, key| hash[key] = Set.new } }
+chapter_section_map = Hash.new do |hash, key|
+  hash[key] = Hash.new{ |hash, key| hash[key] = SortedSet.new }
+end
+dest_uuid_map = Hash.new{ |hash, key| hash[key] = {} }
+
 lo_map = Hash.new do |hash, key|
   hash[key] = Hash.new do |hash, key|
-    hash[key] = Hash.new{ |hash, key| hash[key] = [] }
+    hash[key] = Hash.new{ |hash, key| hash[key] = SortedSet.new }
   end
 end
 
@@ -75,18 +79,22 @@ input_sheet.each_row_streaming(offset: 1, pad_cells: true) do |row|
       dest_section = dest_match[2]
       dest_lo = dest_match[3]
 
-      section = book.chapters[dest_chapter.to_i].sections[dest_section.to_i]
+      dest_chapter_num = dest_chapter.to_i
+      dest_section_num = dest_section.to_i
+
+      section = book.chapters[dest_chapter_num].sections[dest_section_num]
       raise "No such chapter/section in #{col_book_name}: #{dest_match[0]}" if section.nil?
 
       dest_uuid = section.id.split('@').first
-      dest_uuid_tag = "cnxmod:#{dest_uuid}"
 
-      cnxmod_map[orig_chapter][orig_section] << dest_uuid_tag
+      chapter_section_map[orig_chapter][orig_section] << [dest_chapter_num, dest_section_num]
+      dest_uuid_map[dest_chapter_num][dest_section_num] = dest_uuid
 
       next if orig_lo.nil? || dest_lo.nil?
 
-      dest_lo_tag = "lo:#{col_book_name}:#{dest_chapter}-#{dest_section}-#{dest_lo}"
-      lo_map[orig_chapter][orig_section][orig_lo] << dest_lo_tag
+      lo_map[orig_chapter][orig_section][orig_lo] << [dest_chapter_num,
+                                                      dest_section_num,
+                                                      dest_lo.to_i]
     end
   end
 end
@@ -96,10 +104,12 @@ Axlsx::Package.new do |package|
     bold = output_sheet.styles.add_style b: true
     output_sheet.add_row OUTPUT_HEADERS, style: bold
 
-    cnxmod_map.each do |chapter_num, chapter_cnxmod_map|
+    chapter_section_map.each do |chapter_num, section_map|
       chapter_lo_map = lo_map[chapter_num]
-      chapter_cnxmod_map.each do |section_num, cnxmod_tags_set|
-        cnxmod_tags = cnxmod_tags_set.to_a.join(',')
+      section_map.each do |section_num, dest_sections|
+        dest_sections = dest_sections.to_a
+        last_section = dest_sections.last
+
         section_lo_map = chapter_lo_map[section_num]
         section_tag = "#{hs_book_name}-ch%02d-s%02d" % [chapter_num, section_num]
         lo_regex = Regexp.new "\\A#{section_tag}-(?:ap)?lo-?([\\d-]+)\\z"
@@ -118,8 +128,38 @@ Axlsx::Package.new do |package|
 
         grouped_exercises.each do |lo_numbers, exercises|
           exercise_numbers = exercises.map{ |exercise| exercise['number'] }.join(',')
-          lo_tags = lo_numbers.flat_map{ |lo_number| section_lo_map[lo_number] }.uniq.join(',')
-          output_sheet.add_row [exercise_numbers, cnxmod_tags, lo_tags]
+          los = lo_numbers.map{ |lo_number| section_lo_map[lo_number] }.reduce(:+).to_a
+          last_lo = los.last
+
+          cnxmod_tags = []
+          lo_tags = []
+          if last_lo.nil?
+            last_chapter_num = last_section[0]
+            last_section_num = last_section[1]
+
+            cnxmod_tags = dest_sections.map do |chapter_num, section_num|
+              prefix = (chapter_num == last_chapter_num && section_num == last_section_num) ? \
+                         '' : 'alternate-'
+              uuid = dest_uuid_map[chapter_num][section_num]
+              "#{prefix}cnxmod:#{uuid}"
+            end
+          else
+            last_chapter_num = last_lo[0]
+            last_section_num = last_lo[1]
+
+            los.group_by do |chapter_num, section_num, lo_num|
+              [chapter_num, section_num]
+            end.each do |(chapter_num, section_num), los|
+              prefix = (chapter_num == last_chapter_num && section_num == last_section_num) ? \
+                         '' : 'alternate-'
+              cnxmod_tags << "#{prefix}cnxmod:#{dest_uuid_map[chapter_num][section_num]}"
+              lo_tags += los.map do |_, _, lo_num|
+                "#{prefix}lo:#{col_book_name}:#{chapter_num}-#{section_num}-#{lo_num}"
+              end
+            end
+          end
+
+          output_sheet.add_row [exercise_numbers, cnxmod_tags.join(','), lo_tags.join(',')]
         end
       end
     end
