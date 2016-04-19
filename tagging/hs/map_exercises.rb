@@ -145,11 +145,10 @@ Axlsx::Package.new do |package|
             last_section_num = last_section[1]
 
             cnxmod_tags = dest_sections.map do |chapter_num, section_num|
-              alternate = chapter_num != last_chapter_num || section_num != last_section_num
-              extra_tags = ['filter-type:multi-cnxmod'] if alternate
-              prefix = alternate ? 'alternate-' : ''
+              extra_tags = ['filter-type:import:multi-cnxmod'] \
+                if chapter_num != last_chapter_num || section_num != last_section_num
               uuid = dest_uuid_map[chapter_num][section_num]
-              "#{prefix}context-cnxmod:#{uuid}"
+              "context-cnxmod:#{uuid}"
             end
           else
             last_chapter_num = last_lo[0]
@@ -158,16 +157,15 @@ Axlsx::Package.new do |package|
             los.group_by do |chapter_num, section_num, lo_num|
               [chapter_num, section_num]
             end.each do |(chapter_num, section_num), los|
-              alternate = chapter_num != last_chapter_num || section_num != last_section_num
-              extra_tags = ['filter-type:multi-cnxmod'] if alternate
-              prefix = alternate ? 'alternate-' : ''
-              cnxmod_tags << "#{prefix}context-cnxmod:#{dest_uuid_map[chapter_num][section_num]}"
+              extra_tags = ['filter-type:import:multi-cnxmod'] \
+                if chapter_num != last_chapter_num || section_num != last_section_num
+              cnxmod_tags << "context-cnxmod:#{dest_uuid_map[chapter_num][section_num]}"
               lo_tags += los.map do |_, _, lo_num|
-                "#{prefix}lo:#{col_book_name}:#{chapter_num}-#{section_num}-#{lo_num}"
+                "lo:#{col_book_name}:#{chapter_num}-#{section_num}-#{lo_num}"
               end
             end
 
-            extra_tags << 'filter-type:multi-lo' if los.size > 1
+            extra_tags << 'filter-type:import:multi-lo' if los.size > 1
           end
 
           output_sheet.add_row [exercise_numbers, cnxmod_tags.join(','),
