@@ -54,20 +54,20 @@ end
 input_sheet = Roo::Excelx.new(input_filename)
 input_sheet.each_row_streaming(offset: 1, pad_cells: true) do |row|
   values = 0.upto(row.size - 1).map{ |index| (row[index] || OpenStruct.new).value.to_s }
-  next if values.compact.blank?
+  next if values.compact.size < 2
 
   origins = values[0].split(',')
   destinations = values[1].split(',')
 
   orig_matches = origins.map do |origin|
     /(\d+)-(\d+)-(\d+)/.match(origin) || /(\d+).(\d+)/.match(origin) || \
-      raise("Invalid Origin: #{origin}")
-  end
+      puts("WARNING: Invalid Origin: #{origin}")
+  end.compact
 
   dest_matches = destinations.map do |destination|
     /(\d+)-(\d+)-(\d+)/.match(destination) || /(\d+).(\d+)/.match(destination) || \
-      raise("Invalid Destination: #{destination}")
-  end
+      puts("WARNING: Invalid Destination: #{destination}")
+  end.compact
 
   orig_matches.each do |orig_match|
     orig_chapter = orig_match[1]
@@ -100,7 +100,7 @@ input_sheet.each_row_streaming(offset: 1, pad_cells: true) do |row|
 end
 
 no_los = lo_map.empty?
-puts 'No LO mappings found (using module mappings)' if no_los
+puts 'WARNING: No LO mappings found (using module mappings)' if no_los
 
 Axlsx::Package.new do |package|
   package.workbook.add_worksheet(name: 'Map') do |output_sheet|
