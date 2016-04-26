@@ -63,7 +63,7 @@ Axlsx::Package.new do |package|
     bold = sheet.styles.add_style b: true
     unlocked = sheet.styles.add_style locked: false
     center = sheet.styles.add_style alignment: {horizontal: :center}
-    sheet.add_row(['Vocab #', 'Module', 'Term', 'LO'] +
+    sheet.add_row(['Book', 'Vocab #', 'Module', 'Module UUID', 'Term', 'LO'] +
                   options[:distractors].times.map{|n| "Distractor #{n+1}" } +
                   ['Definition'], style: bold)
 
@@ -72,27 +72,29 @@ Axlsx::Package.new do |package|
       chapter.each do | section |
         section.glossary_terms.each do | gt |
           if gt.inner_html
-            sheet.add_comment :ref => "C#{cs_row_num+2}", :author=>'MATH', :visible => false, :text => gt.inner_html
+            sheet.add_comment ref: "E#{cs_row_num+2}", author: 'MATH',
+                              visible: false, text: gt.inner_html
           end
           row = [
-            cs_row_num+=1, "#{chapter.number}-#{section.number}", gt.term, ''
+            book.title, cs_row_num+=1, "#{chapter.number}-#{section.number}",
+            section.id.split('@').first, gt.term, ''
           ] + ([''] * options[:distractors]) + [ gt.definition ]
           sheet.add_row(row)
         end
       end
     end
 
-    sheet.col_style 0, center, row_offset: 1
     sheet.col_style 1, center, row_offset: 1
-    3.upto(options[:distractors] + 3){ |col|
+    sheet.col_style 2, center, row_offset: 1
+    5.upto(options[:distractors] + 5){ |col|
       sheet.col_style( col, unlocked, row_offset: 1 )
     }
 
-    last_distractor = Axlsx.col_ref(options[:distractors] + 3)
+    last_distractor = Axlsx.col_ref(options[:distractors] + 5)
     # validation for distractors
-    sheet.add_data_validation("$E$2:$#{last_distractor}$#{cs_row_num+1}", {
+    sheet.add_data_validation("$G$2:$#{last_distractor}$#{cs_row_num+1}", {
       :type => :list,
-      :formula1 => "$C$2:$C$#{cs_row_num+1}",
+      :formula1 => "$E$2:$E$#{cs_row_num+1}",
       :showDropDown => false,
       :showErrorMessage => true,
       :errorTitle => '',
@@ -107,7 +109,9 @@ Axlsx::Package.new do |package|
       pane.active_pane = :bottom_right
     end
 
-
+    # Hide the book and module UUID columns
+    sheet.column_info[0].hidden = true
+    sheet.column_info[3].hidden = true
   end
 
   # Only create the "LO Map" tab if a lookup spreadsheet was given
@@ -149,7 +153,7 @@ Axlsx::Package.new do |package|
 
       # Add validation on LO column
       package.workbook.sheet_by_name('Terms')
-        .add_data_validation("$D$2:$D$#{cs_row_num+1}", {
+        .add_data_validation("$F$2:$F$#{cs_row_num+1}", {
           :type => :list,
           :formula1 => "'LO Map'!$A$2:$A$#{lo_rows+1}",
           :showDropDown => false,
