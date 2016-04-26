@@ -23,6 +23,9 @@ GEM
     oga (2.2)
       ast
       ruby-ll (~> 2.1)
+    roo (2.3.2)
+      nokogiri (~> 1)
+      rubyzip (~> 1.1, < 2.0.0)
     ruby-ll (2.1.2)
       ansi
       ast
@@ -37,6 +40,7 @@ DEPENDENCIES
   hashie
   httparty
   oga
+  roo
 
 BUNDLED WITH
    1.11.2

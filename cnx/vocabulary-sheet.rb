@@ -17,8 +17,6 @@ require 'roo'
 
 PROTECTION_PASSWORD = 'openstax'
 
-require 'pry' # REMOVE!
-
 options = {}
 ARGV << '-h' if ARGV.empty?
 OptionParser.new do |opts|

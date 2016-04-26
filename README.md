@@ -36,6 +36,14 @@ Example:
 bundle exec ./lookup_uuids.rb http://archive.cnx.org/contents/031da8d3-b525-429c-80cf-6c8ed997733a@9.4 uuids.xlsx
 ```
 
+### vocabulary-sheet.rb
+
+From the cnx folder, run the following command to extract vocabulary terms from glossary sections of a CNX book
+
+```sh
+bundle exec ./vocabulary-sheet.rb --chapters 45,46,47 --cnx-url http://cnx.org/contents/185cbf87-c72e-48f5-b51e-f14f21b5eabd --lo-xlsx ../lo.xlsx --output ../Biology-chapters-45-47.xlsx
+```
+
 ### Tagging
 
 #### lookup_exercises.rb
