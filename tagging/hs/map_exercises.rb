@@ -82,7 +82,10 @@ input_sheet.each_row_streaming(offset: 1, pad_cells: true) do |row|
       dest_chapter_num = dest_chapter.to_i
       dest_section_num = dest_section.to_i
 
-      section = book.chapters[dest_chapter_num].sections[dest_section_num]
+      chapter = book.chapters[dest_chapter_num - 1]
+      has_intro = chapter.sections[0].title.start_with?('Introduction')
+      section_offset = has_intro ? 0 : -1
+      section = chapter.sections[dest_section_num + section_offset]
       raise "No such chapter/section in #{col_book_name}: #{dest_match[0]}" if section.nil?
 
       dest_uuid = section.id.split('@').first
@@ -130,7 +133,7 @@ Axlsx::Package.new do |package|
         end
 
         grouped_exercises.each do |lo_numbers, exercises|
-          exercise_numbers = exercises.map{ |exercise| exercise['number'] }.join(',')
+          exercise_numbers = exercises.map{ |exercise| exercise['number'] }
           los = lo_numbers.map{ |lo_number| section_lo_map[lo_number] }.reduce(:+).to_a
           last_lo = los.last
 
@@ -139,7 +142,7 @@ Axlsx::Package.new do |package|
           extra_tags = []
 
           if last_lo.nil?
-            puts "WARNING: No LO mappings found for #{exercise_numbers
+            puts "WARNING: No LO mappings found for Exercise(s) #{exercise_numbers.join(', ')
                  } (using module mappings)" unless no_los
             last_chapter_num = last_section[0]
             last_section_num = last_section[1]
@@ -168,8 +171,9 @@ Axlsx::Package.new do |package|
             extra_tags << 'filter-type:import:multi-lo' if los.size > 1
           end
 
-          output_sheet.add_row [exercise_numbers, cnxmod_tags.join(','),
-                                lo_tags.join(','), extra_tags.join(',')]
+          output_sheet.add_row [exercise_numbers.join(','), cnxmod_tags.join(','),
+                                lo_tags.join(','), extra_tags.join(',')],
+                               types: [:string, :string, :string, :string]
         end
       end
     end
