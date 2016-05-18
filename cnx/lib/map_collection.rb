@@ -11,6 +11,11 @@ def map_collection(hash, cnx_book_hash, chapter_number = 0)
     end
   else # Chapter (leaf)
     chapter_number += 1
+    if contents.empty?
+      puts "WARNING: Chapter #{chapter_number} is empty!"
+      return chapter_number
+    end
+
     section_number = contents.first['title'].start_with?('Introduction') ? 0 : 1
 
     contents.each do |entry|

@@ -8,7 +8,7 @@ require_relative '../../cnx/lib/book'
 OUTPUT_HEADERS = ['Exercises', 'CNXMOD Tags', 'LO Tags', 'Extra Tags']
 
 BOOK_MAPS = {
-  'k12phys' => { col_name: 'stax-phys', col_uuid: '031da8d3-b525-429c-80cf-6c8ed997733a' },
+  'k12phys' => { col_name: 'stax-phys', col_uuid: '405335a3-7cff-4df2-a9ad-29062a4af261' },
   'apbio' => { col_name: 'stax-bio', col_uuid: '185cbf87-c72e-48f5-b51e-f14f21b5eabd' }
 }
 
