@@ -24,7 +24,7 @@ Axlsx::Package.new do |package|
 
     book.each do |chapter|
       chapter.each do |section|
-        output_sheet.add_row [chapter.number, section.number, section.title, section.id]
+        output_sheet.add_row [chapter.number, section.number, section.title, section.uuid]
       end
     end
   end
