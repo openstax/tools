@@ -13,9 +13,9 @@ module CNX
     def self.fetch(url)
       # Regex turns a URL like http://cnx.org/contents/GFy_h8cu into http://archive.cnx.org/contents/GFy_h8cu.json
       # while still working if it's passed an already valid url like: archive.cnx.org/contents/GFy_h8cu.json
-      url.sub!(/^.*(cnx\.org.*?)(:?\.\w{4})*$/, 'http://archive.\1.json')
-      puts "Fetching from #{url}"
-      Book.new( HTTParty.get(url).to_hash )
+      archive_url = url.sub(/^.*(cnx\.org.*?)(:?\.\w{4})*$/, 'http://archive.\1.json')
+      puts "Fetching from #{archive_url}"
+      Book.new( HTTParty.get(archive_url).to_hash )
     end
 
     class GlossaryTerm < Hashie::Mash
@@ -28,8 +28,16 @@ module CNX
         self.number = number
       end
 
+      def uuid
+        @uuid ||= id.split('@').first
+      end
+
+      def version
+        @version ||= id.split('@').last
+      end
+
       def url
-        "http://archive.cnx.org/contents/#{self.id}.html"
+        "http://archive.cnx.org/contents/#{id}.html"
       end
 
       def contents
