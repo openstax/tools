@@ -127,7 +127,8 @@ Axlsx::Package.new do |package|
             matches = lo_regex.match(tag)
             matches[1].reverse.chomp('0').reverse unless matches.nil?
           end.compact.sort
-          puts "WARNING: LO absent or did not match the section tag for #{exercise_hash['number']
+          puts "WARNING: LO absent or did not match the section tag for exercise #{
+                 exercise_hash['number']
                } (tags: #{tags.inspect})" if lo_numbers.empty?
           lo_numbers
         end
