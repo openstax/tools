@@ -77,7 +77,7 @@ Axlsx::Package.new do |package|
           end
           row = [
             book.title, cs_row_num+=1, "#{chapter.number}-#{section.number}",
-            section.id.split('@').first, gt.term, ''
+            section.uuid, gt.term, ''
           ] + ([''] * options[:distractors]) + [ gt.definition ]
           sheet.add_row(row)
         end

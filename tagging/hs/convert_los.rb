@@ -5,10 +5,6 @@ require 'axlsx'
 
 OUTPUT_HEADERS = ['Old LO', 'New LO']
 
-class Array
-  alias_method :blank?, :empty?
-end
-
 def convert_lo(lo)
   matches = /\A\w+-?ch(\d+)-?s(\d+)-?lo(\d+)\z/.match lo
   return '' if matches.nil?

@@ -12,10 +12,6 @@ BOOK_UUIDS = {
   'apbio' => 'd52e93f4-8653-4273-86da-3850001c0786'
 }
 
-class Array
-  alias_method :blank?, :empty?
-end
-
 if ARGV.length < 2 || ARGV.length > 3
   puts 'Usage: hs/lookup_exercises.rb hs_book_name output_spreadsheet [exercises_base_url]'
   puts 'Writes an xlsx file with name output_spreadsheet containing a list of CNX module UUID\'s'
@@ -42,12 +38,12 @@ Tempfile.open(['uuids', '.xlsx']) do |file|
       output_sheet.add_row OUTPUT_HEADERS_WITH_EXERCISES, style: bold
 
       temp_book.each_row_streaming(offset: 1, pad_cells: true) do |row|
-        values = 0.upto(row.size - 1).collect do |index|
+        values = 0.upto(row.size - 1).map do |index|
           # Hack until Roo's new version with proper typecasting is released
           val = (row[index] || OpenStruct.new).value
           Integer(val, 10) rescue val
         end
-        next if values.compact.blank?
+        next if values.compact.empty?
 
         exercises_tag = "#{hs_book_name}-ch%02d-s%02d" % [values[0], values[1]]
         exercises_hash = HTTParty.get("#{exercises_base_url}/api/exercises?q=tag:#{exercises_tag}")

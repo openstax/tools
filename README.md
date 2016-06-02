@@ -97,10 +97,28 @@ entry for the origin book in the first column and the entry for the destination 
 in the second column.
 
 The output spreadsheet contains a list of exercise numbers in the first column and a list of tags
-that will be associated with those exercises in the second column.
+that will be associated with those exercises in the other columns.
 
 Example:
 
 ```sh
 bundle exec hs/map_exercises.rb k12phys physmap.xlsx phystags.xlsx https://exercises.openstax.org
+```
+
+#### copy_exercises.rb
+
+From the tagging folder, run the following command
+to copy exercises to a derived copy of the same book:
+
+```sh
+bundle exec cc/copy_exercises.rb orig_book_name dest_book_name output_spreadsheet [exercises_base_url]
+```
+
+The output spreadsheet contains a list of exercise numbers in the first column and a cnxmod tag
+that will be associated with those exercises in the second column.
+
+Example:
+
+```sh
+bundle exec cc/copy_exercises.rb phys phys-courseware phystags.xlsx https://exercises.openstax.org
 ```
