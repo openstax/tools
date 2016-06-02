@@ -15,10 +15,6 @@ OUTPUT_HEADERS = [
 TRUE_VALUES = ['true', 't', 'yes', 'y', '1']
 FALSE_VALUES = ['false', 'f', 'no', 'n', '0']
 
-class Array
-  alias_method :blank?, :empty?
-end
-
 def convert_row(row, cnx_book_hash)
   book = row[0]
 
@@ -96,12 +92,12 @@ Axlsx::Package.new do |package|
     output_sheet.add_row OUTPUT_HEADERS, style: bold
 
     input_book.each_row_streaming(offset: 1, pad_cells: true).each_with_index do |row, row_index|
-      values = 0.upto(row.size - 1).collect do |index|
+      values = 0.upto(row.size - 1).map do |index|
         # Hack until Roo's new version with proper typecasting is released
         val = (row[index] || OpenStruct.new).value
         Integer(val, 10) rescue val
       end
-      next if values.compact.blank?
+      next if values.compact.empty?
 
       begin
         output_sheet.add_row convert_row(values, cnx_book_hash)

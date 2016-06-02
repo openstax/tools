@@ -12,10 +12,6 @@ BOOK_MAPS = {
   'apbio' => { col_name: 'stax-bio', col_uuid: '185cbf87-c72e-48f5-b51e-f14f21b5eabd' }
 }
 
-class Array
-  alias_method :blank?, :empty?
-end
-
 if ARGV.length < 3 || ARGV.length > 4
   puts 'Usage: hs/map_exercises.rb hs_book_name input_spreadsheet output_spreadsheet [exercises_base_url]'
   puts 'Takes as input a spreadsheet with the following columns:'
@@ -88,7 +84,7 @@ input_sheet.each_row_streaming(offset: 1, pad_cells: true) do |row|
       section = chapter.sections[dest_section_num + section_offset]
       raise "No such chapter/section in #{col_book_name}: #{dest_match[0]}" if section.nil?
 
-      dest_uuid = section.id.split('@').first
+      dest_uuid = section.uuid
 
       chapter_section_map[orig_chapter][orig_section] << [dest_chapter_num, dest_section_num]
       dest_uuid_map[dest_chapter_num][dest_section_num] = dest_uuid
