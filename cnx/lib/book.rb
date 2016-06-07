@@ -9,11 +9,12 @@ module CNX
 
   module Book
 
-    # Main entry point.  Call with a url of a CNX book
+    # Main entry point. Call with a url of a CNX book
     def self.fetch(url)
-      # Regex turns a URL like http://cnx.org/contents/GFy_h8cu into http://archive.cnx.org/contents/GFy_h8cu.json
+      # Regex turns a URL like http://cnx.org/contents/GFy_h8cu into https://archive.cnx.org/contents/GFy_h8cu.json
       # while still working if it's passed an already valid url like: archive.cnx.org/contents/GFy_h8cu.json
-      archive_url = url.sub(/^.*(cnx\.org.*?)(:?\.\w{4})*$/, 'http://archive.\1.json')
+      archive_url = url.sub(/\Ahttp:\/\//, 'https://')
+                       .sub(/\A(?:https:\/\/)?cnx\.org/, 'https://archive.cnx.org')
       puts "Fetching from #{archive_url}"
       Book.new( HTTParty.get(archive_url).to_hash )
     end
