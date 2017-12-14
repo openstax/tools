@@ -1,3 +1,5 @@
+# This script uses eval on the given string
+# Do not use it with strings from untrusted sources
 # Usage:
 # err = <<-ERR
 # (paste full rspec error string here, starting on "expected")
