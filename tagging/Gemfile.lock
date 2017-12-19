@@ -1,12 +1,19 @@
+GIT
+  remote: https://github.com/randym/axlsx.git
+  revision: c8ac844572b25fda358cc01d2104720c4c42f450
+  ref: c8ac844572b25fda358cc01d2104720c4c42f450
+  specs:
+    axlsx (2.1.0.pre)
+      htmlentities (~> 4.3.4)
+      mimemagic (~> 0.3)
+      nokogiri (>= 1.6.6)
+      rubyzip (>= 1.2.1)
+
 GEM
   remote: https://rubygems.org/
   specs:
     ansi (1.5.0)
     ast (2.2.0)
-    axlsx (2.1.0.pre)
-      htmlentities (~> 4.3.1)
-      nokogiri (>= 1.4.1)
-      rubyzip (~> 1.1.7)
     byebug (4.0.3)
       columnize (= 0.9.0)
     columnize (0.9.0)
@@ -16,26 +23,27 @@ GEM
       json (~> 1.8)
       multi_xml (>= 0.5.2)
     json (1.8.3)
-    mini_portile (0.6.2)
+    mimemagic (0.3.2)
+    mini_portile2 (2.3.0)
     multi_xml (0.5.5)
-    nokogiri (1.6.6.2)
-      mini_portile (~> 0.6.0)
+    nokogiri (1.8.1)
+      mini_portile2 (~> 2.3.0)
     oga (2.2)
       ast
       ruby-ll (~> 2.1)
-    roo (2.1.1)
+    roo (2.7.1)
       nokogiri (~> 1)
       rubyzip (~> 1.1, < 2.0.0)
     ruby-ll (2.1.2)
       ansi
       ast
-    rubyzip (1.1.7)
+    rubyzip (1.2.1)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  axlsx (~> 2.1.0.pre)
+  axlsx!
   byebug
   hashie
   httparty
@@ -43,4 +51,4 @@ DEPENDENCIES
   roo
 
 BUNDLED WITH
-   1.11.2
+   1.16.0

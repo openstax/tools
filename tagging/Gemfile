@@ -1,8 +1,13 @@
 source 'https://rubygems.org'
 
-gem 'roo'
-gem 'axlsx', '~> 2.1.0.pre'
+git_source(:github) do |repo_name|
+  repo_name = "#{repo_name}/#{repo_name}" unless repo_name.include?("/")
+  "https://github.com/#{repo_name}.git"
+end
+
+gem 'axlsx', github: 'randym/axlsx', ref: 'c8ac844572b25fda358cc01d2104720c4c42f450'
 gem 'oga'
+gem 'roo'
 gem 'hashie'
 gem 'httparty'
 gem 'byebug'
