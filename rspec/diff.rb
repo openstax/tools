@@ -27,6 +27,9 @@ VARIABLE_STRING_PATTERN = /@\w+=("[^"]+")/
 VARIABLE_OTHER_PATTERN = /@\w+=([^\s]+)/
 SPLIT_PATTERN = / to \w+ /
 
+class Match
+end
+
 def incl(o1, o2)
   oo1 = case o1
   when RSpec::Matchers::BuiltIn::Include, RSpec::Matchers::BuiltIn::ContainExactly
@@ -56,16 +59,16 @@ def incl(o1, o2)
     o1 == o2
   end
 
-  return if match
+  return Match if match
 
   if oo1.is_a?(Hash) && oo2.is_a?(Hash)
     {}.tap do |hh|
       oo2.each do |key, value|
         result = incl(oo1[key], value)
 
-        hh[key] = result unless result.blank?
+        hh[key] = result unless Match.equal?(result)
       end
-    end
+    end.tap { |hh| return Match if hh.empty? }
   elsif oo1.is_a?(Array) && oo2.is_a?(Array)
     match_any = o1.is_a?(RSpec::Matchers::BuiltIn::Include) ||
                 o1.is_a?(RSpec::Matchers::BuiltIn::ContainExactly) ||
@@ -74,13 +77,11 @@ def incl(o1, o2)
 
     oo2.each_with_index.map do |value, ii|
       if match_any
-        oo1.map do |oo1v|
-          incl(oo1v, value)
-        end.select(&:blank?).first
+        oo1.any? { |oo1v| Match.equal?(incl(oo1v, value)) } ? Match : value
       else
         incl(oo1[ii], value)
       end
-    end.reject(&:blank?)
+    end.reject { |oo2v| Match.equal?(oo2v) }.tap { |aa| return Match if aa.empty? }
   else
     o2
   end
