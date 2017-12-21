@@ -18,6 +18,9 @@ require 'rspec'
 METHOD_PATTERN = / to (\w+) /
 SYMBOL_HASHROCKET_PATTERN = /:(\w+)\s*=>\s*/
 STRING_HASHROCKET_PATTERN = /:?("[^"]+")\s*=>\s*/
+BE_STRING_PATTERN = /\(be ([\w\s]+) ("[^"]+")\)/
+BE_ARRAY_PATTERN = /\(be ([\w\s]+) (\[[^\[\]]+\])\)/
+BE_OTHER_PATTERN = /\(be ([\w\s]+) ([^\s()]+)\)/
 HASH_PATTERN = /\(a hash including ([^()]+)\)/
 COLLECTION_INCLUDING_PATTERN = /\(a collection including ([^()]+)\)/
 COLLECTION_EXACTLY_PATTERN = /\(a collection containing exactly ([^()]+)\)/
@@ -27,7 +30,7 @@ VARIABLE_STRING_PATTERN = /@\w+=("[^"]+")/
 VARIABLE_OTHER_PATTERN = /@\w+=([^\s]+)/
 SPLIT_PATTERN = / to \w+ /
 
-class Match
+module Match
 end
 
 def incl(o1, o2)
@@ -97,6 +100,14 @@ def diff(str)
   while !SYMBOL_HASHROCKET_PATTERN.match(str).nil? || !STRING_HASHROCKET_PATTERN.match(str).nil? do
     str.gsub!(SYMBOL_HASHROCKET_PATTERN, '\1: ')
     str.gsub!(STRING_HASHROCKET_PATTERN, '\1: ')
+  end
+
+  while !BE_STRING_PATTERN.match(str).nil? ||
+        !BE_ARRAY_PATTERN.match(str).nil? ||
+        !BE_OTHER_PATTERN.match(str).nil? do
+    str.gsub!(BE_STRING_PATTERN, '#<RSpec::Matchers::BuiltIn::Be \'\1\', \2>')
+    str.gsub!(BE_ARRAY_PATTERN, '#<RSpec::Matchers::BuiltIn::Be \'\1\', \2>')
+    str.gsub!(BE_OTHER_PATTERN, '#<RSpec::Matchers::BuiltIn::Be \'\1\', \2>')
   end
 
   while !HASH_PATTERN.match(str).nil? ||
